@@ -2,7 +2,9 @@
 
 (provide define-qi-syntax
          define-qi-syntax-rule
+         define-core-qi-syntax-rule
          define-qi-syntax-parser
+         define-core-qi-syntax-parser
          define-qi-foreign-syntaxes
          (for-syntax qi-macro))
 
@@ -95,6 +97,45 @@
           (syntax-parser
             [(_ . pat) #'template])))]))
 
+(define-syntax define-core-qi-syntax-rule
+  (syntax-parser
+    [(_ (name . pat) template)
+     #'(define-qi-syntax name
+         (qi-macro
+          (syntax-parser
+            [(_ . pat) (syntax/loc this-syntax
+                         template)])))]))
+
+(begin-for-syntax
+
+  (define (source-location-contained? inner outer)
+    (and (equal? (syntax-source inner)
+                 (syntax-source outer))
+         (>= (syntax-position inner)
+             (syntax-position outer))
+         (<= (+ (syntax-position inner)
+                (syntax-span inner))
+             (+ (syntax-position outer)
+                (syntax-span outer)))))
+
+  ;; Example: (and g) → g
+  ;; This would naively highlight (and g), but in this case
+  ;; we want to highlight g instead. So, we check whether
+  ;; one expression is contained in the other, and if so,
+  ;; keep the srcloc of the inner one, to handle this.
+  (define (propagate-syntax-loc f)
+    (λ (stx)
+      (let ([res (f stx)])
+        (datum->syntax res  ; lexical context
+          ;; datum
+          (syntax-e res)
+          ;; for srcloc
+          (if (source-location-contained? res stx)
+              res
+              stx)
+          ;; for properties
+          res)))))
+
 (define-syntax define-qi-syntax-parser
   (syntax-parser
     [(_ name clause ...)
@@ -102,6 +143,15 @@
          (qi-macro
           (syntax-parser
             clause ...)))]))
+
+(define-syntax define-core-qi-syntax-parser
+  (syntax-parser
+    [(_ name clause ...)
+     #'(define-qi-syntax name
+         (qi-macro
+          (propagate-syntax-loc
+           (syntax-parser
+             clause ...))))]))
 
 (define-syntax define-qi-foreign-syntaxes
   (syntax-parser

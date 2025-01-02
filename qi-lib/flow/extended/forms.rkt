@@ -31,26 +31,26 @@
 
 (define-for-qi none? ~none?)
 
-(define-qi-syntax-rule (one-of? v:expr ...)
+(define-core-qi-syntax-rule (one-of? v:expr ...)
   (~> (member (list v ...)) ->boolean))
 
-(define-qi-syntax-rule (none onex:clause)
+(define-core-qi-syntax-rule (none onex:clause)
   (not (any onex)))
 
-(define-qi-syntax-parser NOR
+(define-core-qi-syntax-parser NOR
   [_:id #'(~> OR NOT)])
 
-(define-qi-syntax-parser NAND
+(define-core-qi-syntax-parser NAND
   [_:id #'(~> AND NOT)])
 
-(define-qi-syntax-parser XNOR
+(define-core-qi-syntax-parser XNOR
   [_:id #'(~> XOR NOT)])
 
-(define-qi-syntax-rule (and% onex:conjux-clause ...)
+(define-core-qi-syntax-rule (and% onex:conjux-clause ...)
   (~> (== onex.parsed ...)
       all?))
 
-(define-qi-syntax-rule (or% onex:disjux-clause ...)
+(define-core-qi-syntax-rule (or% onex:disjux-clause ...)
   (~> (== onex.parsed ...)
       any?))
 
@@ -58,34 +58,34 @@
 
 ;; Right-threading is just normal threading but with a syntax
 ;; property attached to the components indicating the chirality
-(define-qi-syntax-rule (thread-right onex:right-threading-clause ...)
+(define-core-qi-syntax-rule (thread-right onex:right-threading-clause ...)
   (~> onex.chiral ...))
 
-(define-qi-syntax-parser crossover
+(define-core-qi-syntax-parser crossover
   [_:id #'(~> ▽ reverse △)])
 
-(define-qi-syntax-parser relay*
+(define-core-qi-syntax-parser relay*
   [(_ onex:clause ... rest-onex:clause)
    #:with len #`#,(length (syntax->list #'(onex ...)))
    #'(group len (== onex ...) rest-onex)])
 
-(define-qi-syntax-rule (bundle (n:number ...)
-                               selection-onex:clause
-                               remainder-onex:clause)
+(define-core-qi-syntax-rule (bundle (n:number ...)
+                                    selection-onex:clause
+                                    remainder-onex:clause)
   (-< (~> (select n ...) selection-onex)
       (~> (block n ...) remainder-onex)))
 
 ;;; Conditionals
 
-(define-qi-syntax-rule (when condition:clause
-                         consequent:clause)
+(define-core-qi-syntax-rule (when condition:clause
+                              consequent:clause)
   (if condition consequent ⏚))
 
-(define-qi-syntax-rule (unless condition:clause
-                         alternative:clause)
+(define-core-qi-syntax-rule (unless condition:clause
+                              alternative:clause)
   (if condition ⏚ alternative))
 
-(define-qi-syntax-parser switch
+(define-core-qi-syntax-parser switch
   [(_) #'_]
   [(_ ((~or* (~datum divert) (~datum %))
        condition-gate:clause
@@ -147,7 +147,7 @@
            [condition consequent]
            ...))])
 
-(define-qi-syntax-rule (gate onex:clause)
+(define-core-qi-syntax-rule (gate onex:clause)
   (if onex _ ⏚))
 
 ;;; Common utilities
@@ -156,35 +156,35 @@
 
 (define-for-qi live? ~live?)
 
-(define-qi-syntax-rule (rectify v:expr ...)
+(define-core-qi-syntax-rule (rectify v:expr ...)
   (if live? _ (gen v ...)))
 
 ;;; High level circuit elements
 
 ;; aliases for inputs
-(define-qi-syntax-parser 1>
+(define-core-qi-syntax-parser 1>
   [_:id #'(select 1)])
-(define-qi-syntax-parser 2>
+(define-core-qi-syntax-parser 2>
   [_:id #'(select 2)])
-(define-qi-syntax-parser 3>
+(define-core-qi-syntax-parser 3>
   [_:id #'(select 3)])
-(define-qi-syntax-parser 4>
+(define-core-qi-syntax-parser 4>
   [_:id #'(select 4)])
-(define-qi-syntax-parser 5>
+(define-core-qi-syntax-parser 5>
   [_:id #'(select 5)])
-(define-qi-syntax-parser 6>
+(define-core-qi-syntax-parser 6>
   [_:id #'(select 6)])
-(define-qi-syntax-parser 7>
+(define-core-qi-syntax-parser 7>
   [_:id #'(select 7)])
-(define-qi-syntax-parser 8>
+(define-core-qi-syntax-parser 8>
   [_:id #'(select 8)])
-(define-qi-syntax-parser 9>
+(define-core-qi-syntax-parser 9>
   [_:id #'(select 9)])
 
-(define-qi-syntax-parser inverter
+(define-core-qi-syntax-parser inverter
   [_:id #'(>< NOT)])
 
-(define-qi-syntax-parser effect
+(define-core-qi-syntax-parser effect
   [(_ sidex:clause onex:clause)
    #'(-< (~> sidex ⏚)
          onex)]
