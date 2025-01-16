@@ -16,7 +16,8 @@
          values->list
          feedback-times
          feedback-while
-         kw-helper)
+         kw-helper
+         compose-with-values)
 
 (require racket/match
          (only-in racket/function
@@ -30,6 +31,15 @@
 
 (define-syntax-parse-rule (values->list body:expr ...+)
   (call-with-values (λ () body ...) list))
+
+(define-syntax-parser compose-with-values
+  [(_ args)
+   #'(apply values args)]
+  [(_ args f g ...)
+   #'(call-with-values
+      (λ ()
+        (compose-with-values args g ...))
+      f)])
 
 (define (kw-helper f args)
   (make-keyword-procedure

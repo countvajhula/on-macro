@@ -10,8 +10,8 @@
                      syntax/parse
                      "../syntax.rkt"
                      "../../aux-syntax.rkt"
-                     (only-in racket/list make-list)
-                     ))
+                     (only-in racket/list make-list))
+         syntax/parse/define)
 
 (begin-for-syntax
   (define-and-register-pass 1000 (qi0-wrapper stx)
@@ -51,9 +51,7 @@
     [(~or* (~datum ⏚) (~datum ground)) ; NOTE: technically not core
      #'(qi0->racket (select))]
     [((~or* (~datum ~>) (~datum thread)) onex:clause ...)
-     #`(compose . #,(reverse
-                     (syntax->list
-                      #'((qi0->racket onex) ...))))]
+     (thread-parser #'(~> onex ...))]
     [e:relay-form (relay-parser #'e)]
     [e:tee-form (tee-parser #'e)]
     ;; map and filter
@@ -162,6 +160,16 @@ the DSL.
 |#
 
 (begin-for-syntax
+
+  (define (thread-parser stx)
+    (syntax-parse stx
+      [(_ f ...)
+       #:with (reversed-f ...) (reverse
+                                (syntax->list
+                                 #'((qi0->racket f) ...)))
+       #'(λ args
+           (compose-with-values args
+                                reversed-f ...))]))
 
   (define (sep-parser stx)
     (syntax-parse stx
