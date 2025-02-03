@@ -69,6 +69,29 @@ Qi is a hosted language on the @hyperlink["https://racket-lang.org/"]{Racket pla
 
  Additionally, Qi itself uses few and carefully benchmarked dependencies, so that the load-time overhead of @racket[(require qi)] is minimal.
 
+@subsection{About Qi's Release Practices}
+
+Qi breaks with traditional Racket package development and occasionally ships breaking changes in a @hyperlink["https://semver.org/"]{SemVer}-style major release. For that reason, in some cases when using Qi as a dependency, it is advisable to pin to a Qi tag using a Git @tech{package source} rather than follow the main "qi" Racket @tech{package source}. Keep reading for details and examples.
+
+Qi follows the @hyperlink["http://timothyfitz.com/2009/02/10/continuous-deployment-at-imvu-doing-the-impossible-fifty-times-a-day/"]{continuous deployment} model of development. This means that fresh changes are pushed to the main branch of development after they pass a rigorous and comprehensive suite of tests and thorough code review. Additionally, Qi packages on the Racket package index point to this main branch on the source host, so that running @racket[raco pkg install qi] or @racket[raco pkg update qi] will always get the version on the @racket[main] branch, reflecting the latest improvements.
+
+This doesn't mean that you must use this version, however. The expressiveness of modern version control systems allows us to define diverse versioning protocols directly on the versioning backend (e.g., Git) to best support diverse usage needs. Towards this end, Qi follows these conventions:
+
+@itemlist[#:style 'ordered
+  @item{Each significant new release has a tagged version, which is static and immutable.}
+  @item{Each legacy release has a "maintenance" branch that will be stable without any backwards incompatible changes or new features, and will be supported with bug fixes as needed.}
+]
+
+Now, traditionally, we may have grown accustomed to depending on a certain version of a package "or newer" (as are the semantics of using a Racket, rather than Git, @tech{package source}), so that we never have to update the dependency specification to get the latest improvements. We believe that this convention needlessly overburdens development while threatening application stability, requiring us to choose one or the other.
+
+But instead, by relying on a version with either of the above semantics, we gain stability and flexibility as users of Qi without compromising the freedom to innovate and remedy past missteps for developers of Qi. This style of dependency can be accomplished by using a Git @tech{package source} in your @racket[info.rkt], instead of a Racket @tech{package source}. Like this:
+
+@codeblock{
+  (define deps '("git://github.com/drym-org/qi.git#v5.0"))
+}
+
+In addition, as part of each release, backwards incompatibilities are publicly announced and an effort is made to work with dependent package and application developers to ensure compatibility with the latest release, further bridging the gap to Racket's package management practices. Thus, in practice, outside of a production deployment, relying on the Racket @tech{package source} should be fine.
+
 @section{Relationship to the Threading Macro}
 
 The usual threading macro in @seclink["top" #:indirect? #t #:doc '(lib "scribblings/threading.scrbl")]{Threading Macros} is a purely syntactic transformation that does not make any assumptions about the expressions being threaded through, so that it works out of the box for threading values through both functions as well as macros. On the other hand, Qi is primarily oriented around @emph{functions}, and @tech{flows} are expected to be @seclink["What_is_a_Flow_"]{function-valued}. Threading values through macros using Qi requires special handling.
